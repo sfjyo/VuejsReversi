@@ -1,1 +1,3 @@
 # VuejsReversi
+
+Vue.jsでリバーシ

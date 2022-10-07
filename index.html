@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .board {
+        width: 300px;
+        height: 300px;
+      }
+      .hover-gray:hover {
+        background-color: darkseagreen;
+      }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div class="container text-center">
+        <div class="board">
+          <div v-for="(board_y, idx_y) in boards" class="row border">
+            <div v-for="(board, idx_x) in board_y" v-on:click="clickBoard(idx_y, idx_x)" class="col border hover-gray">
+              <div class="user-select-none">{{board}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>Player : {{player}}</div>
+      <div>Black : {{count[0]}}</div>
+      <div>White : {{count[1]}}</div>
+      <div>{{boards}}</div>
+    </div>
+    <script>
+      const MAX_BOARD = 8
+      const CHK_MOVE = [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [-1, 1], [1, -1], [1, 1]]
+      var app = new Vue({
+          el: "#app",
+          data: {
+            // プレイヤ
+            player: 1,
+            // ボードの初期状態
+            boards: [
+              [0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0],
+              [0,0,0,1,2,0,0,0],
+              [0,0,0,2,1,0,0,0],
+              [0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0],
+              [0,0,0,0,0,0,0,0]
+            ],
+            // 白黒カウント
+            count: [2, 2]
+          },
+          methods: {
+            // クリックイベント
+            clickBoard: function (y, x) {
+              // 置けるかチェック
+              if (this.chkBoard(y, x, this.player)) {
+                this.boards[y].splice(x, 1, this.player)
+                this.player = (this.player) % 2 + 1
+                this.countColor();
+              }
+            },
+            // 白黒カウント
+            countColor: function() {
+              this.$set(this.count, 0, this.boards.flat().filter(c => c === 1).length)
+              this.$set(this.count, 1, this.boards.flat().filter(c => c === 2).length)
+            },
+            // 置ける過チェック
+            chkBoard: function(y, x, player) {
+              let chk = false
+              if (this.boards[y][x] !== 0) {
+                return chk
+              }
+              for (let move of CHK_MOVE) {
+                let [ret, maxY, maxX] = this.chkReverse(y, x, player, move[0], move[1])
+                if (ret) {
+                  this.doReverse(y, x, player, move[0], move[1], maxY, maxX)
+                  chk = true
+                }
+              }
+              return chk
+            },
+            // ひっくり返せるかチェック
+            chkReverse: function(y, x, player, addY, addX) {
+              let chk = false
+              count = 0
+              while (true) {
+                if (y + addY === -1 || x + addX === -1 || y + addY === MAX_BOARD || x + addX === MAX_BOARD || this.boards[y + addY][x + addX] === 0) {
+                  chk = false
+                  break
+                } else if (this.boards[y + addY][x + addX] === player) {
+                  if (count > 0) {
+                    chk = true
+                  }
+                  break
+                } else {
+                  count += 1
+                  y += addY
+                  x += addX
+                }
+              }
+              return [chk, y, x]
+            },
+            // ひっくり返す
+            doReverse: function(y, x, player, addY, addX, maxY, maxX) {
+              while (true) {
+                y += addY
+                x += addX
+                this.boards[y].splice(x, 1, player)
+                if (y === maxY && x === maxX) {
+                  return
+                }
+              }
+            }
+          }
+        })
+
+    </script>
+  </body>
+</html>
